@@ -1,26 +1,19 @@
 FROM alpine
 
-LABEL maintainer="Lachlan Evenson <lachlan.evenson@gmail.com>"
+LABEL maintainer="Jimmy Lafontaine Rivera <jimmy@cachengo.com>"
 
-ARG VCS_REF
-ARG BUILD_DATE
+COPY ./VERSION VERSION
 
-# Metadata
-LABEL org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.vcs-url="https://github.com/lachie83/k8s-helm" \
-      org.label-schema.build-date=$BUILD_DATE \
-      org.label-schema.docker.dockerfile="/Dockerfile"
-
-ENV HELM_LATEST_VERSION="v2.14.1"
-
-RUN apk add --update ca-certificates \
- && apk add --update -t deps wget git openssl bash \
- && wget https://storage.googleapis.com/kubernetes-helm/helm-${HELM_LATEST_VERSION}-linux-amd64.tar.gz \
- && tar -xvf helm-${HELM_LATEST_VERSION}-linux-amd64.tar.gz \
- && mv linux-amd64/helm /usr/local/bin \
- && apk del --purge deps \
- && rm /var/cache/apk/* \
- && rm -f /helm-${HELM_LATEST_VERSION}-linux-amd64.tar.gz
+RUN if test "$(uname -m)" = "x86_64" ; then AARCH="amd64"; else AARCH="arm64"; fi \
+    && VERSION=$(cat VERSION) \
+    && apk add --update ca-certificates \
+    && apk add --update -t deps wget git openssl bash \
+    && wget https://storage.googleapis.com/kubernetes-helm/helm-${VERSION}-linux-${AARCH}.tar.gz \
+    && tar -xvf helm-${VERSION}-linux-$AARCH.tar.gz \
+    && mv linux-${AARCH}/helm /usr/local/bin \
+    && apk del --purge deps \
+    && rm /var/cache/apk/* \
+    && rm -f /helm-${VERSION}-linux-${AARCH}.tar.gz
 
 ENTRYPOINT ["helm"]
 CMD ["help"]
